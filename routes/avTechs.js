@@ -1,10 +1,12 @@
 const router = require("express").Router();
 const AvTech = require("../models/AvTechs");
 const Appointment = require("../models/Appointments")
+var mongoose = require('mongoose');
 
 //create avTech
 router.post("/", async (req, res) => {
 	const newAvTech = new AvTech(req.body);
+
 	try {
 		const savedAvTech = await newAvTech.save();
 		res.status(201).json(savedAvTech);
@@ -26,7 +28,20 @@ router.get("/:key", async (req, res) => {
 
 		avTechs.forEach(async (item, index) => {
 			const appts = await Appointment.find({ techname: item.id })
-			aux.push({ ...item._doc, appts: appts })
+
+			const aux1 = item.currentJob.match(/[\x00-\x7F]/g)
+			const aux2 = [...new Set(aux1)]
+			let lmao
+			if ((aux2.length === 1) && (aux2.includes(' ') || aux2.includes('\n'))) {
+				aux.push({ ...item._doc, appts: appts })
+			} else if ((aux2.length === 2) && (aux2.includes(' ') && aux2.includes('\n'))) {
+				aux.push({ ...item._doc, appts: appts })
+			} else if (item.currentJob == "") {
+				aux.push({ ...item._doc, appts: appts })
+			} else {
+				aux.unshift({ ...item._doc, appts: appts })
+			}
+			console.log()
 
 			if (aux.length === avTechs.length) {
 				// we are done! :D
